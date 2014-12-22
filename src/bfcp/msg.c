@@ -119,6 +119,38 @@ int bfcp_msg_vencode(struct mbuf *mb, uint8_t ver, bool r, enum bfcp_prim prim,
 	return err;
 }
 
+/**
+ * Encode a BFCP message with parameters
+ *
+ * @param mb      Mbuf to encode into
+ * @param ap      Message parameters
+ *
+ * @return 0 if success, otherwise errorcode
+ */
+int bfcp_msg_build(struct mbuf *mb, bfcp_msg_param_t *param)
+{
+    size_t start, len;
+    int err;
+    if (!mb)
+        return EINVAL;
+
+    start = mb->pos;
+    mb->pos += BFCP_HDR_SIZE;
+
+    err = bfcp_attr_build(mb, &param->attrl);
+    if (err)
+        return err;
+
+    /* header */
+    len = mb->pos - start - BFCP_HDR_SIZE;
+    mb->pos = start;
+    err = hdr_encode(mb, param->version, param->response, param->prim, 
+      (uint16_t)(len/4), param->confid, param->tid, param->userid);
+    mb->pos += len;
+
+    return err;
+}
+
 
 /**
  * Encode a BFCP message
@@ -148,7 +180,6 @@ int bfcp_msg_encode(struct mbuf *mb, uint8_t ver, bool r, enum bfcp_prim prim,
 
 	return err;
 }
-
 
 /**
  * Decode a BFCP message from a buffer
@@ -191,7 +222,6 @@ int bfcp_msg_decode(struct bfcp_msg **msgp, struct mbuf *mb)
 
 	return err;
 }
-
 
 /**
  * Get a BFCP attribute from a BFCP message

@@ -105,32 +105,32 @@ enum bfcp_transp {
 };
 
 /** BFCP Request Status */
-struct bfcp_reqstatus {
+typedef struct bfcp_reqstatus {
 	enum bfcp_reqstat status;
 	uint8_t qpos;
-};
+} bfcp_reqstatus_t;
 
 /** BFCP Error Code */
-struct bfcp_errcode {
+typedef struct bfcp_errcode {
 	enum bfcp_err code;
 	uint8_t *details;  /* optional */
 	size_t len;
-};
+} bfcp_errcode_t;
 
 /** BFCP Supported Attributes */
-struct bfcp_supattr {
+typedef struct bfcp_supattr {
 	enum bfcp_attrib *attrv;
 	size_t attrc;
-};
+} bfcp_supattr_t;
 
 /** BFCP Supported Primitives */
-struct bfcp_supprim {
+typedef struct bfcp_supprim {
 	enum bfcp_prim *primv;
 	size_t primc;
-};
+} bfcp_supprim_t;
 
 /** BFCP Attribute */
-struct bfcp_attr {
+typedef struct bfcp_attr {
 	struct le le;
 	struct list attrl;
 	enum bfcp_attrib type;
@@ -156,16 +156,16 @@ struct bfcp_attr {
 		char *useruri;
 		uint16_t reqbyid;
 	} v;
-};
+} bfcp_attr_t;
 
 /** BFCP unknown attributes */
-struct bfcp_unknown_attr {
+typedef struct bfcp_unknown_attr {
 	uint8_t typev[16];
 	size_t typec;
-};
+} bfcp_unknown_attr_t;
 
 /** BFCP Message */
-struct bfcp_msg {
+typedef struct bfcp_msg {
 	struct bfcp_unknown_attr uma;
 	struct sa src;
 	uint8_t ver;
@@ -177,7 +177,17 @@ struct bfcp_msg {
 	uint16_t tid;
 	uint16_t userid;
 	struct list attrl;
-};
+} bfcp_msg_t;
+
+typedef struct bfcp_msg_param {
+    uint8_t version;
+    bool response;
+    enum bfcp_prim prim;
+    uint32_t confid;
+    uint16_t tid;
+    uint16_t userid;
+    struct list attrl;
+} bfcp_msg_param_t;
 
 struct tls;
 struct bfcp_conn;
@@ -198,7 +208,6 @@ struct bfcp_encode {
 	bfcp_encode_h *ench;
 	void *arg;
 };
-
 
 /**
  * Defines the BFCP attribute handler
@@ -241,7 +250,7 @@ int bfcp_attr_print(struct re_printf *pf, const struct bfcp_attr *attr);
 const char *bfcp_attr_name(enum bfcp_attrib type);
 const char *bfcp_reqstatus_name(enum bfcp_reqstat status);
 const char *bfcp_errcode_name(enum bfcp_err code);
-
+int bfcp_attr_build(struct mbuf *mb, struct list *attrl);
 
 /* msg */
 int bfcp_msg_vencode(struct mbuf *mb, uint8_t ver, bool r, enum bfcp_prim prim,
@@ -257,6 +266,7 @@ struct bfcp_attr *bfcp_msg_attr_apply(const struct bfcp_msg *msg,
 				      bfcp_attr_h *h, void *arg);
 int bfcp_msg_print(struct re_printf *pf, const struct bfcp_msg *msg);
 const char *bfcp_prim_name(enum bfcp_prim prim);
+int bfcp_msg_build(struct mbuf *mb, bfcp_msg_param_t *param);
 
 
 /* conn */
