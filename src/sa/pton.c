@@ -5,7 +5,7 @@
  */
 #ifdef HAVE_INET_PTON
 #ifdef WIN32
-#include <windows.h>
+//#include <windows.h>
 #else
 #define _BSD_SOURCE 1    /**< Use BSD code */
 #include <sys/types.h>

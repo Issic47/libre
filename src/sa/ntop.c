@@ -8,7 +8,7 @@
 #ifdef _MSC_VER
 #pragma warning (disable: 4090)
 #endif
-#include <windows.h>
+//#include <windows.h>
 #else
 #define __USE_BSD 1    /**< Use BSD code */
 #include <sys/types.h>
