@@ -13,11 +13,34 @@
 #include <re_tmr.h>
 #include <re_bfcp.h>
 #include "bfcp.h"
+#include <assert.h>
 
 
 enum {
 	BFCP_HDR_SIZE = 12,
 };
+
+
+void bfcp_msg_param_init( bfcp_msg_param_t *param, 
+    uint8_t ver, bool r, enum bfcp_prim prim, 
+    uint32_t confid, uint16_t tid, uint16_t userid )
+{
+    assert(param);
+    param->version = ver;
+    param->response = r;
+    param->prim = prim;
+    param->confid = confid;
+    param->tid = tid;
+    param->userid = userid;
+    list_init(&param->attrl);
+}
+
+void bfcp_msg_param_append_attr( bfcp_msg_param_t *param, bfcp_attr_t *attr )
+{
+    assert(param);
+    assert(attr);
+    list_append(&param->attrl, &attr->le, attr);
+}
 
 
 static void destructor(void *arg)
@@ -127,7 +150,7 @@ int bfcp_msg_vencode(struct mbuf *mb, uint8_t ver, bool r, enum bfcp_prim prim,
  *
  * @return 0 if success, otherwise errorcode
  */
-int bfcp_msg_build(struct mbuf *mb, bfcp_msg_param_t *param)
+int bfcp_msg_build(struct mbuf *mb, const bfcp_msg_param_t *param)
 {
     size_t start, len;
     int err;
@@ -137,9 +160,11 @@ int bfcp_msg_build(struct mbuf *mb, bfcp_msg_param_t *param)
     start = mb->pos;
     mb->pos += BFCP_HDR_SIZE;
 
-    err = bfcp_attr_build(mb, &param->attrl);
-    if (err)
-        return err;
+    if (list_head(&param->attrl)) {
+        err = bfcp_attr_build(mb, &param->attrl);
+        if (err)
+            return err;
+    }
 
     /* header */
     len = mb->pos - start - BFCP_HDR_SIZE;

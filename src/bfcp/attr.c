@@ -214,7 +214,7 @@ int bfcp_attrs_vencode(struct mbuf *mb, unsigned attrc, va_list *ap)
  *
  * @return 0 if success, otherwise errorcode
  */
-int bfcp_attr_build(struct mbuf *mb, struct list *attrl)
+int bfcp_attr_build(struct mbuf *mb, const struct list *attrl)
 {
     struct le *le;
     struct bfcp_attr *attr;
