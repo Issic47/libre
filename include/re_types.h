@@ -29,7 +29,7 @@ typedef char                    int8_t;
 #elif defined(__STDC__)
 typedef signed char             int8_t;
 #else
-typedef char                    int8_t;
+typedef signed char             int8_t;
 #endif
 
 typedef signed short int          int16_t;
@@ -47,11 +47,23 @@ typedef unsigned long long int    uint64_t;
 #endif /* __BIT_TYPES_DEFINED__ */
 
 #endif /* __int8_t_defined */
+
+#if defined(_WIN32)
+
+#if !defined(_SSIZE_T_) && !defined(_SSIZE_T_DEFINED)
+typedef intptr_t ssize_t;
+# define _SSIZE_T_
+# define _SSIZE_T_DEFINED
+#endif // _SSIZE_T && _SSIZE_T_DEFINED
+
+#else
+
 #ifndef __ssize_t_defined
 typedef long     ssize_t;
 #define __ssize_t_defined
 #endif
 
+#endif  // _WIN32
 
 #ifndef WIN32
 typedef uint32_t socklen_t;
