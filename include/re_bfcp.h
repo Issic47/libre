@@ -179,23 +179,6 @@ typedef struct bfcp_msg {
 	struct list attrl;
 } bfcp_msg_t;
 
-/** BFCP message build parameters */
-typedef struct bfcp_msg_param {
-    uint8_t version;
-    bool response;
-    enum bfcp_prim prim;
-    uint32_t confid;
-    uint16_t tid;
-    uint16_t userid;
-    struct list attrl;
-} bfcp_msg_param_t;
-
-void bfcp_msg_param_init(bfcp_msg_param_t *param, 
-    uint8_t ver, bool r, enum bfcp_prim prim, 
-    uint32_t confid, uint16_t tid, uint16_t userid);
-
-void bfcp_msg_param_append_attr(bfcp_msg_param_t *param, bfcp_attr_t *attr);
-
 struct tls;
 struct bfcp_conn;
 
@@ -257,7 +240,7 @@ int bfcp_attr_print(struct re_printf *pf, const struct bfcp_attr *attr);
 const char *bfcp_attr_name(enum bfcp_attrib type);
 const char *bfcp_reqstatus_name(enum bfcp_reqstat status);
 const char *bfcp_errcode_name(enum bfcp_err code);
-int bfcp_attr_build(struct mbuf *mb, const struct list *attrl);
+int bfcp_attr_update_len(struct mbuf *mb, size_t start);
 
 /* msg */
 int bfcp_msg_vencode(struct mbuf *mb, uint8_t ver, bool r, enum bfcp_prim prim,
@@ -273,8 +256,7 @@ struct bfcp_attr *bfcp_msg_attr_apply(const struct bfcp_msg *msg,
 				      bfcp_attr_h *h, void *arg);
 int bfcp_msg_print(struct re_printf *pf, const struct bfcp_msg *msg);
 const char *bfcp_prim_name(enum bfcp_prim prim);
-int bfcp_msg_build(struct mbuf *mb, const bfcp_msg_param_t *param);
-
+int bfcp_msg_update_len(struct mbuf *mb, size_t start);
 
 /* conn */
 int bfcp_listen(struct bfcp_conn **bcp, enum bfcp_transp tp, struct sa *laddr,

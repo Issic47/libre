@@ -207,80 +207,27 @@ int bfcp_attrs_vencode(struct mbuf *mb, unsigned attrc, va_list *ap)
 }
 
 /**
- * Encode BFCP Attributes with attribute list
+ * Update BFCP Attributes length field
  *
  * @param mb    Mbuf to encode into
- * @param ap    Attributes list
+ * @param start Attribute begin index in mb
  *
  * @return 0 if success, otherwise errorcode
  */
-int bfcp_attr_build(struct mbuf *mb, const struct list *attrl)
+int bfcp_attr_update_len( struct mbuf *mb, size_t start )
 {
-    struct le *le;
-    struct bfcp_attr *attr;
+  int err = 0;
+  size_t len = mb->pos - start;
 
-    if (!mb || !attrl)
-        return EINVAL;
+  mb->pos = start + 1;
+  err = mbuf_write_u8(mb, (uint8_t)len);
+  if (err)
+    return err;
 
-    le = list_head(attrl);
+  mb->pos += (len - BFCP_ATTR_HDR_SIZE);
 
-    while (le) {
-        int type;
-        const void *v;
-        size_t start, len;
-        int err;
-
-        attr = list_ledata(le);
-        if (!attr)
-            return EINVAL;
-
-        type = attr->type;
-        v = &attr->v;
-
-        if (!v)
-            continue;
-
-        start = mb->pos;
-
-        if (type == BFCP_ENCODE_HANDLER) {
-
-            const struct bfcp_encode *enc = v;
-
-            if (enc->ench) {
-                err = enc->ench(mb, enc->arg);
-                if (err)
-                   return err;
-            }
-
-            continue;
-        }
-        
-        err = attr_encode(mb, attr->mand, type & 0x7f, v);
-        if (err)
-            return err;
-
-        /* sub attributes */
-        if (list_head(&attr->attrl) == NULL)
-            continue;
-
-        err = bfcp_attr_build(mb, &attr->attrl);
-        if (err)
-           return err;
-
-        /* update total length for grouped attributes */
-        len = mb->pos - start;
-
-        mb->pos = start + 1;
-        err = mbuf_write_u8(mb, (uint8_t)len);
-        if (err)
-          return err;
-
-        mb->pos += (len - BFCP_ATTR_HDR_SIZE);
-    }
-
-    return 0;
+  return 0;
 }
-
 
 
 /**

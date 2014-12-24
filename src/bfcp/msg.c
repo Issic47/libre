@@ -20,29 +20,6 @@ enum {
 	BFCP_HDR_SIZE = 12,
 };
 
-
-void bfcp_msg_param_init( bfcp_msg_param_t *param, 
-    uint8_t ver, bool r, enum bfcp_prim prim, 
-    uint32_t confid, uint16_t tid, uint16_t userid )
-{
-    assert(param);
-    param->version = ver;
-    param->response = r;
-    param->prim = prim;
-    param->confid = confid;
-    param->tid = tid;
-    param->userid = userid;
-    list_init(&param->attrl);
-}
-
-void bfcp_msg_param_append_attr( bfcp_msg_param_t *param, bfcp_attr_t *attr )
-{
-    assert(param);
-    assert(attr);
-    list_append(&param->attrl, &attr->le, attr);
-}
-
-
 static void destructor(void *arg)
 {
 	struct bfcp_msg *msg = arg;
@@ -66,7 +43,6 @@ static int hdr_encode(struct mbuf *mb, uint8_t ver, bool r,
 
 	return err;
 }
-
 
 static int hdr_decode(struct bfcp_msg *msg, struct mbuf *mb)
 {
@@ -98,7 +74,6 @@ static int hdr_decode(struct bfcp_msg *msg, struct mbuf *mb)
 
 	return 0;
 }
-
 
 /**
  * Encode a BFCP message with variable arguments
@@ -143,38 +118,24 @@ int bfcp_msg_vencode(struct mbuf *mb, uint8_t ver, bool r, enum bfcp_prim prim,
 }
 
 /**
- * Encode a BFCP message with parameters
+ * Update BFCP message payload length field
  *
  * @param mb      Mbuf to encode into
- * @param ap      Message parameters
+ * @param start   Message begin index in mb
  *
  * @return 0 if success, otherwise errorcode
  */
-int bfcp_msg_build(struct mbuf *mb, const bfcp_msg_param_t *param)
+int bfcp_msg_update_len( struct mbuf *mb, size_t start )
 {
-    size_t start, len;
-    int err;
-    if (!mb)
-        return EINVAL;
-
-    start = mb->pos;
-    mb->pos += BFCP_HDR_SIZE;
-
-    if (list_head(&param->attrl)) {
-        err = bfcp_attr_build(mb, &param->attrl);
-        if (err)
-            return err;
-    }
-
-    /* header */
-    len = mb->pos - start - BFCP_HDR_SIZE;
-    mb->pos = start;
-    err = hdr_encode(mb, param->version, param->response, param->prim, 
-      (uint16_t)(len/4), param->confid, param->tid, param->userid);
-    mb->pos += len;
-
-    return err;
+  int err;
+  size_t len = mb->pos - start - BFCP_HDR_SIZE;
+  mb->pos = start + 2;
+  err = mbuf_write_u16(mb, htons((uint16_t)(len/4)));
+  mb->pos += len;
+  
+  return err;
 }
+
 
 
 /**
