@@ -131,7 +131,7 @@ int bfcp_msg_update_len( struct mbuf *mb, size_t start )
   size_t len = mb->pos - start - BFCP_HDR_SIZE;
   mb->pos = start + 2;
   err = mbuf_write_u16(mb, htons((uint16_t)(len/4)));
-  mb->pos += len;
+  mb->pos += 8 + len;
   
   return err;
 }
