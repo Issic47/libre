@@ -4,6 +4,9 @@
  * Copyright (C) 2010 Creytiv.com
  */
 
+#ifndef RE_TYPES_H
+#define RE_TYPES_H
+
 #include <sys/types.h>
 
 #ifdef _MSC_VER
@@ -65,6 +68,8 @@ typedef long     ssize_t;
 
 #endif  // _WIN32
 
+
+
 #ifndef WIN32
 typedef uint32_t socklen_t;
 #endif
@@ -93,19 +98,26 @@ typedef unsigned long long int    uint64_t;
 # ifndef HAVE__BOOL
 #  ifdef __cplusplus
 typedef bool _Bool;
-#  else
+# else
 #   define _Bool signed char
+#   define bool _Bool
+#   define false 0
+#   define true 1
 #  endif
 # endif
-# define bool _Bool
-# define false 0
-# define true 1
-# define __bool_true_false_are_defined 1
+#   define __bool_true_false_are_defined 1
 #endif
 
 /* Needed for MS compiler */
-#ifdef _MSC_VER
-#define inline _inline
+#ifndef __cplusplus
+#if __STDC_VERSION__ == 199901L /* C99 */
+#elif _MSC_VER >= 1500 /* MSVC 9 or newer */
+#define inline __inline
+#elif __GNUC__ >= 3 /* GCC 3 or newer */
+#define inline __inline
+#else /* Unknown or ancient */
+#define inline
+#endif
 #endif
 
 
@@ -248,3 +260,5 @@ typedef bool _Bool;
 #ifndef EAUTH
 #define EAUTH 217
 #endif
+
+#endif // !RE_TYPES_H
