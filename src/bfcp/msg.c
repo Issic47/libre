@@ -29,6 +29,66 @@ static void destructor(void *arg)
 	list_flush(&msg->attrl);
 }
 
+int bfcp_hdr_encode( struct mbuf *mb, const struct bfcp_hdr *hdr )
+{
+    int err;
+    uint8_t firstbyte = 
+      (hdr->ver << 5) | ((hdr->r ? 1 : 0) << 4) | ((hdr->f ? 1 : 0) << 3);
+    err  = mbuf_write_u8(mb, firstbyte);
+    err |= mbuf_write_u8(mb, hdr->prim);
+    err |= mbuf_write_u16(mb, htons(hdr->len));
+    err |= mbuf_write_u32(mb, htonl(hdr->confid));
+    err |= mbuf_write_u16(mb, htons(hdr->tid));
+    err |= mbuf_write_u16(mb, htons(hdr->userid));
+
+    if (hdr->f) {
+        err |= mbuf_write_u16(mb, htons(hdr->fragoffset));
+        err |= mbuf_write_u16(mb, htons(hdr->fraglen));
+    }
+
+    return err;
+}
+
+int bfcp_hdr_decode( struct bfcp_hdr *hdr, struct mbuf *mb )
+{
+    uint8_t b;
+    size_t len;
+
+	if (mbuf_get_left(mb) < BFCP_HDR_SIZE)
+		return ENODATA;
+
+	b = mbuf_read_u8(mb);
+
+	hdr->ver    = b >> 5;
+	hdr->r      = (b >> 4) & 1;
+	hdr->f      = (b >> 3) & 1;
+	hdr->prim   = mbuf_read_u8(mb);
+	hdr->len    = ntohs(mbuf_read_u16(mb));
+	hdr->confid = ntohl(mbuf_read_u32(mb));
+	hdr->tid    = ntohs(mbuf_read_u16(mb));
+	hdr->userid = ntohs(mbuf_read_u16(mb));
+
+    if (hdr->f) {
+        if (mbuf_get_left(mb) < 4)
+            return ENODATA;
+
+        hdr->fragoffset = ntohs(mbuf_read_u16(mb));
+        hdr->fraglen = ntohs(mbuf_read_u16(mb));
+        len = hdr->fraglen;
+        if (hdr->len < hdr->fraglen)
+            return EBADMSG;
+    } else {
+        len = hdr->len;
+    }
+
+	if (hdr->ver != BFCP_VER1 && hdr->ver != BFCP_VER2)
+		return EBADMSG;
+
+	if (mbuf_get_left(mb) < (size_t)(4*len))
+		return ENODATA;
+
+    return 0;
+}
 
 static int hdr_encode(struct mbuf *mb, uint8_t ver, bool r,
 		      enum bfcp_prim prim, uint16_t len, uint32_t confid,
@@ -66,6 +126,8 @@ static int hdr_decode(struct bfcp_msg *msg, struct mbuf *mb)
 	msg->userid = ntohs(mbuf_read_u16(mb));
     
     if (msg->f) {
+        if (mbuf_get_left(mb) < 4)
+            return ENODATA;
         msg->fragoffset = ntohs(mbuf_read_u16(mb));
         msg->fraglen = ntohs(mbuf_read_u16(mb));
         len = msg->fraglen;
@@ -212,7 +274,8 @@ int bfcp_msg_decode(struct bfcp_msg **msgp, struct mbuf *mb)
         {
             return ENOMEM;
         }
-        err = mbuf_write_mem(msg->fragdata, mb->buf + mb->pos, msg->fragdata->size);
+        err = mbuf_write_mem(
+            msg->fragdata,mb->buf + mb->pos, msg->fragdata->size);
         msg->fragdata->pos = 0;
         goto out;
     }

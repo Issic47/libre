@@ -185,6 +185,19 @@ typedef struct bfcp_msg {
 struct tls;
 struct bfcp_conn;
 
+typedef struct bfcp_hdr {
+    uint8_t ver;
+    unsigned r:1;
+    unsigned f:1;
+    enum bfcp_prim prim;
+    uint16_t len;
+    uint32_t confid;
+    uint16_t tid;
+    uint16_t userid;
+    uint16_t fragoffset;
+    uint16_t fraglen;
+} bfcp_hdr_t;
+
 
 /**
  * Defines the BFCP encode handler
@@ -231,6 +244,9 @@ typedef void (bfcp_recv_h)(const struct bfcp_msg *msg, void *arg);
  */
 typedef void (bfcp_resp_h)(int err, const struct bfcp_msg *msg, void *arg);
 
+/* header */
+int bfcp_hdr_encode(struct mbuf *mb, const struct bfcp_hdr *hdr);
+int bfcp_hdr_decode(struct bfcp_hdr *hdr, struct mbuf *mb);
 
 /* attr */
 int bfcp_attrs_vencode(struct mbuf *mb, unsigned attrc, va_list *ap);
