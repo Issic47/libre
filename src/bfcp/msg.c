@@ -66,13 +66,13 @@ static int hdr_decode(struct bfcp_msg *msg, struct mbuf *mb)
 	msg->userid = ntohs(mbuf_read_u16(mb));
     
     if (msg->f) {
-      msg->fragoffset = ntohs(mbuf_read_u16(mb));
-      msg->fraglen = ntohs(mbuf_read_u16(mb));
-      len = msg->fraglen;
-      if (msg->len < msg->fraglen)
-        return EBADMSG;
+        msg->fragoffset = ntohs(mbuf_read_u16(mb));
+        msg->fraglen = ntohs(mbuf_read_u16(mb));
+        len = msg->fraglen;
+        if (msg->len < msg->fraglen)
+            return EBADMSG;
     } else {
-      len = msg->len;
+        len = msg->len;
     }
 
 	if (msg->ver != BFCP_VER1 && msg->ver != BFCP_VER2)
@@ -201,21 +201,20 @@ int bfcp_msg_decode(struct bfcp_msg **msgp, struct mbuf *mb)
 
 	err = hdr_decode(msg, mb);
 	if (err) {
-		mb->pos = start;
 		goto out;
 	}
 
     if (msg->f)
     {
-      assert(mb->pos == BFCP_HDR_FRAG_SIZE);
-      msg->fragdata = mbuf_alloc(4*msg->fraglen);
-      if (!msg->fragdata)
-      {
-        return ENOMEM;
-      }
-      err = mbuf_write_mem(msg->fragdata, mb->buf + mb->pos, msg->fragdata->size);
-      msg->fragdata->pos = 0;
-      goto out;
+        assert(mb->pos == BFCP_HDR_FRAG_SIZE);
+        msg->fragdata = mbuf_alloc(4*msg->fraglen);
+        if (!msg->fragdata)
+        {
+            return ENOMEM;
+        }
+        err = mbuf_write_mem(msg->fragdata, mb->buf + mb->pos, msg->fragdata->size);
+        msg->fragdata->pos = 0;
+        goto out;
     }
 
 	err = bfcp_attrs_decode(&msg->attrl, mb, 4*msg->len, &msg->uma);
@@ -223,10 +222,12 @@ int bfcp_msg_decode(struct bfcp_msg **msgp, struct mbuf *mb)
 		goto out;
 
  out:
-	if (err)
+	if (err) {
+        mb->pos = start;
 		mem_deref(msg);
-	else
+    } else {
 		*msgp = msg;
+    }
 
 	return err;
 }
