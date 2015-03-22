@@ -18,12 +18,14 @@
 
 enum {
 	BFCP_HDR_SIZE = 12,
+    BFCP_HDR_FRAG_SIZE = 16,
 };
 
 static void destructor(void *arg)
 {
 	struct bfcp_msg *msg = arg;
-
+    if (msg->fragdata)
+      mem_deref(msg->fragdata);
 	list_flush(&msg->attrl);
 }
 
@@ -47,6 +49,7 @@ static int hdr_encode(struct mbuf *mb, uint8_t ver, bool r,
 static int hdr_decode(struct bfcp_msg *msg, struct mbuf *mb)
 {
 	uint8_t b;
+    size_t len;
 
 	if (mbuf_get_left(mb) < BFCP_HDR_SIZE)
 		return ENODATA;
@@ -61,15 +64,21 @@ static int hdr_decode(struct bfcp_msg *msg, struct mbuf *mb)
 	msg->confid = ntohl(mbuf_read_u32(mb));
 	msg->tid    = ntohs(mbuf_read_u16(mb));
 	msg->userid = ntohs(mbuf_read_u16(mb));
+    
+    if (msg->f) {
+      msg->fragoffset = ntohs(mbuf_read_u16(mb));
+      msg->fraglen = ntohs(mbuf_read_u16(mb));
+      len = msg->fraglen;
+      if (msg->len < msg->fraglen)
+        return EBADMSG;
+    } else {
+      len = msg->len;
+    }
 
 	if (msg->ver != BFCP_VER1 && msg->ver != BFCP_VER2)
 		return EBADMSG;
 
-	/* fragmentation not supported */
-	if (msg->f)
-		return ENOSYS;
-
-	if (mbuf_get_left(mb) < (size_t)(4*msg->len))
+	if (mbuf_get_left(mb) < (size_t)(4*len))
 		return ENODATA;
 
 	return 0;
@@ -195,6 +204,19 @@ int bfcp_msg_decode(struct bfcp_msg **msgp, struct mbuf *mb)
 		mb->pos = start;
 		goto out;
 	}
+
+    if (msg->f)
+    {
+      assert(mb->pos == BFCP_HDR_FRAG_SIZE);
+      msg->fragdata = mbuf_alloc(4*msg->fraglen);
+      if (!msg->fragdata)
+      {
+        return ENOMEM;
+      }
+      err = mbuf_write_mem(msg->fragdata, mb->buf + mb->pos, msg->fragdata->size);
+      msg->fragdata->pos = 0;
+      goto out;
+    }
 
 	err = bfcp_attrs_decode(&msg->attrl, mb, 4*msg->len, &msg->uma);
 	if (err)

@@ -27,8 +27,6 @@ struct bfcp_conn {
 
 
 /* attributes */
-int bfcp_attrs_decode(struct list *attrl, struct mbuf *mb, size_t len,
-		      struct bfcp_unknown_attr *uma);
 struct bfcp_attr *bfcp_attrs_find(const struct list *attrl,
 				  enum bfcp_attrib type);
 struct bfcp_attr *bfcp_attrs_apply(const struct list *attrl,

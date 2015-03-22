@@ -176,6 +176,9 @@ typedef struct bfcp_msg {
 	uint32_t confid;
 	uint16_t tid;
 	uint16_t userid;
+    uint16_t fragoffset;
+    uint16_t fraglen;
+    struct mbuf *fragdata;
 	struct list attrl;
 } bfcp_msg_t;
 
@@ -232,6 +235,8 @@ typedef void (bfcp_resp_h)(int err, const struct bfcp_msg *msg, void *arg);
 /* attr */
 int bfcp_attrs_vencode(struct mbuf *mb, unsigned attrc, va_list *ap);
 int bfcp_attrs_encode(struct mbuf *mb, unsigned attrc, ...);
+int bfcp_attrs_decode(struct list *attrl, struct mbuf *mb, size_t len,
+                      struct bfcp_unknown_attr *uma);
 struct bfcp_attr *bfcp_attr_subattr(const struct bfcp_attr *attr,
 				    enum bfcp_attrib type);
 struct bfcp_attr *bfcp_attr_subattr_apply(const struct bfcp_attr *attr,
