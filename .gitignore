@@ -38,3 +38,5 @@
 *.unsuccessfulbuild
 *.sdf
 *.cache
+
+obj/*

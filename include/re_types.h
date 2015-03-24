@@ -59,6 +59,13 @@ typedef intptr_t ssize_t;
 # define _SSIZE_T_DEFINED
 #endif // _SSIZE_T && _SSIZE_T_DEFINED
 
+#elif defined(ANDROID)
+
+#ifndef _SSIZE_T_DEFINED_
+#define _SSIZE_T_DEFINED_
+typedef int  ssize_t;
+#endif
+
 #else
 
 #ifndef __ssize_t_defined
