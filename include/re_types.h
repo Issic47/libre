@@ -70,7 +70,7 @@ typedef long     ssize_t;
 
 
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(ANDROID)
 typedef uint32_t socklen_t;
 #endif
 #endif
